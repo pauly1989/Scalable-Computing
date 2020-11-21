@@ -13,7 +13,7 @@ import argparse
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
-import cv2 as cv
+#import cv2 as cv
 
     
 def decode(characters, y):
@@ -74,12 +74,12 @@ def main():
 
 
            
-                ret,thresh_img = cv2.threshold(gray_data,200,255,cv.THRESH_BINARY_INV)
+                ret,thresh_img = cv2.threshold(gray_data,200,255,cv2.THRESH_BINARY_INV)
            
             
                 kernel = np.ones((2,2), np.uint8)
                 erode_thresh_img = cv2.erode(thresh_img, kernel)
-                blur = cv.GaussianBlur(erode_thresh_img,(5,5),0)
+                blur = cv2.GaussianBlur(erode_thresh_img,(5,5),0)
                 
                 
             
