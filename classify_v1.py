@@ -13,12 +13,24 @@ import argparse
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
-#import cv2 as cv
+import cv2 as cv
 
     
 def decode(characters, y):
     y = numpy.argmax(numpy.array(y), axis=2)[:,0]
-    return ''.join([characters[x] for x in y])
+    print (" The value of y is:" ,y)
+    z=""
+
+    for x in y:
+        if x != 36:
+            z = z + str(characters[x])
+    print("Value of z is:", z)
+    return (z)
+            
+
+    
+    
+    
 
 def main():
     parser = argparse.ArgumentParser()
@@ -45,10 +57,12 @@ def main():
         exit(1)
 
     symbols_file = open(args.symbols, 'r')
-    captcha_symbols = symbols_file.readline().strip()
+    captcha_symbols = symbols_file.readline()
+    print("Length of captcha symbol set is", len(captcha_symbols))
+    print("Classifying captchas with symbol set {"+ captcha_symbols +"}")
     symbols_file.close()
 
-    print("Classifying captchas with symbol set {" + captcha_symbols + "}")
+    
 
     with tf.device('/cpu:0'):
         with open(args.output, 'w') as output_file:
@@ -74,12 +88,12 @@ def main():
 
 
            
-                ret,thresh_img = cv2.threshold(gray_data,200,255,cv2.THRESH_BINARY_INV)
+                ret,thresh_img = cv2.threshold(gray_data,200,255,cv.THRESH_BINARY_INV)
            
             
                 kernel = np.ones((2,2), np.uint8)
                 erode_thresh_img = cv2.erode(thresh_img, kernel)
-                blur = cv2.GaussianBlur(erode_thresh_img,(5,5),0)
+                blur = cv.GaussianBlur(erode_thresh_img,(5,5),0)
                 
                 
             
@@ -87,6 +101,10 @@ def main():
                 (h, w) = image.shape
                 image = image.reshape([ -1, h, w])
                 prediction = model.predict(image)
+                #print("prediction is", prediction)
+                holder =[]
+                holder = numpy.argmax(numpy.array(prediction), axis=2)[:,0]
+                #print ("The holder is", holder)
                 output_file.write(x + ", " + decode(captcha_symbols, prediction) + "\n")
 
                 print('Classified ' + x)

@@ -26,7 +26,7 @@ def decode(characters, y):
 
     for x in y:
         if x != 36:
-            z = z + str([characters[x]])
+            z = z + str(characters[x])
     print("Value of z is:", z)
     return (z)
     
