@@ -11,7 +11,7 @@ import string
 import random
 import argparse
 
-import tensorflow.keras as keras
+#import tensorflow.keras as keras
 import numpy as np
 
     
@@ -20,8 +20,17 @@ import tflite_runtime.interpreter as tflite
 
 
 def decode(characters, y):
-    y = numpy.argmax(numpy.array(y), axis=2)[:,0]
-    return ''.join([characters[x] for x in y])
+    y = numpy.argmax(numpy.array(y), axis=1)
+    print (" The value of y is:" ,y)
+    z=""
+
+    for x in y:
+        if x != 36:
+            z = z + str([characters[x]])
+    print("Value of z is:", z)
+    return (z)
+    
+    #return ''.join([characters[x] for x in y])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -48,26 +57,25 @@ def main():
         exit(1)
 
     symbols_file = open(args.symbols, 'r')
-    captcha_symbols = symbols_file.readline().strip()
+    captcha_symbols = symbols_file.readline()
     symbols_file.close()
 
     print("Classifying captchas with symbol set {" + captcha_symbols + "}")
 
     #with tflite.device('/cpu:0'):
+
+         
+    interpreter = tflite.Interpreter(model_path=args.model_name) 
+    interpreter.allocate_tensors()  
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+
+
+
     with open(args.output, 'w') as output_file:
-         json_file = open(args.model_name+'.json', 'r')
-         loaded_model_json = json_file.read()
-         json_file.close()
-         model = keras.models.model_from_json(loaded_model_json)
-         model.load_weights(args.model_name+'.h5')
-         model.compile(loss='categorical_crossentropy',
-                       optimizer=keras.optimizers.Adam(1e-3, amsgrad=True),
-                       metrics=['accuracy'])
 
-
-
-
-    for x in os.listdir(args.captcha_dir):
+        for x in os.listdir(args.captcha_dir):
                 # load image and preprocess it
                 raw_data = cv2.imread(os.path.join(args.captcha_dir, x))
                 rgb_data = cv2.cvtColor(raw_data, cv2.COLOR_BGR2RGB)
@@ -89,10 +97,22 @@ def main():
                 
                 
             
-                image = numpy.array(blur) / 255.0
+                image = numpy.array(blur, dtype=numpy.float32) / 255.0
                 (h, w) = image.shape
                 image = image.reshape([ -1, h, w])
-                prediction = model.predict(image)
+         #      prediction = model.predict(image)
+                input_index = interpreter.get_input_details()[0]["index"] 
+                interpreter.set_tensor(input_index, image)
+                interpreter.invoke()
+                
+                prediction = []
+
+                for result in output_details:
+                    output_data = interpreter.get_tensor(result['index'])
+                    prediction.append(output_data)
+
+                prediction = numpy.reshape(prediction, (len(output_details), -1))                
+                
                 output_file.write(x + ", " + decode(captcha_symbols, prediction) + "\n")
 
                 print('Classified ' + x)
